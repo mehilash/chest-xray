@@ -1,0 +1,602 @@
+/* ---------------------------------------------------------
+   GENERAL PAGE SETTINGS
+--------------------------------------------------------- */
+
+* {
+    box-sizing: border-box;
+    /* Includes padding and border inside element width and height. */
+}
+
+body {
+    margin: 0;
+    /* Removes the default browser margin. */
+
+    font-family: Arial, Helvetica, sans-serif;
+    /* Sets a clean and readable font. */
+
+    background-color: #f4f7fb;
+    /* Gives the webpage a light background. */
+
+    color: #222222;
+    /* Sets the default text color. */
+
+    line-height: 1.5;
+    /* Improves readability between lines. */
+}
+
+
+/* ---------------------------------------------------------
+   HEADER
+--------------------------------------------------------- */
+
+header {
+    background: #12355b;
+    /* Sets the dark blue header background. */
+
+    color: white;
+    /* Makes the header text white. */
+
+    padding: 28px 20px;
+    /* Adds space inside the header. */
+
+    text-align: center;
+    /* Centers the header content. */
+
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    /* Adds a small shadow below the header. */
+}
+
+header h1 {
+    margin: 0;
+    /* Removes the default heading margin. */
+
+    font-size: 30px;
+    /* Sets the main heading size. */
+
+    font-weight: 700;
+    /* Makes the heading bold. */
+}
+
+header p {
+    margin: 8px 0 0;
+    /* Adds a small gap below the main heading. */
+
+    font-size: 15px;
+    /* Sets the subtitle size. */
+
+    opacity: 0.9;
+    /* Makes the subtitle slightly softer. */
+}
+
+
+/* ---------------------------------------------------------
+   MAIN CONTAINER
+--------------------------------------------------------- */
+
+.container {
+    width: 90%;
+    /* Uses 90% of the available screen width. */
+
+    max-width: 1000px;
+    /* Prevents the content from becoming too wide. */
+
+    margin: 35px auto;
+    /* Centers the container and adds top/bottom spacing. */
+}
+
+
+/* ---------------------------------------------------------
+   CARD
+--------------------------------------------------------- */
+
+.card {
+    background: white;
+    /* Creates a white content card. */
+
+    padding: 30px;
+    /* Adds space inside the card. */
+
+    margin-bottom: 25px;
+    /* Adds space between cards. */
+
+    border-radius: 12px;
+    /* Rounds the corners of the card. */
+
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    /* Adds a soft shadow around the card. */
+}
+
+.card h2 {
+    margin-top: 0;
+    /* Removes unnecessary space above the heading. */
+
+    color: #12355b;
+    /* Uses the same dark blue as the header. */
+
+    font-size: 24px;
+    /* Sets the card heading size. */
+}
+
+.card p {
+    color: #555555;
+    /* Uses gray text for supporting information. */
+}
+
+
+/* ---------------------------------------------------------
+   UPLOAD AREA
+--------------------------------------------------------- */
+
+.upload-area {
+    border: 2px dashed #8ca6c1;
+    /* Creates a dashed border around the upload section. */
+
+    border-radius: 10px;
+    /* Rounds the upload area corners. */
+
+    padding: 35px 20px;
+    /* Adds space inside the upload area. */
+
+    text-align: center;
+    /* Centers the upload controls. */
+
+    background-color: #f8fbff;
+    /* Gives the upload section a very light background. */
+
+    margin-top: 20px;
+    /* Adds space above the upload area. */
+
+    transition: 0.3s ease;
+    /* Makes hover effects smooth. */
+}
+
+.upload-area:hover {
+    border-color: #1769aa;
+    /* Changes the border color when the user hovers over it. */
+
+    background-color: #f2f8fd;
+    /* Slightly changes the background on hover. */
+}
+
+
+/* ---------------------------------------------------------
+   FILE INPUT
+--------------------------------------------------------- */
+
+input[type="file"] {
+    margin-top: 15px;
+    /* Adds space above the file selector. */
+
+    padding: 10px;
+    /* Adds space inside the file selector. */
+
+    font-size: 14px;
+    /* Sets the file selector text size. */
+
+    max-width: 100%;
+    /* Prevents the input from overflowing on small screens. */
+}
+
+
+/* ---------------------------------------------------------
+   IMAGE PREVIEW
+--------------------------------------------------------- */
+
+#preview {
+    display: none;
+    /* Keeps the image hidden until the user selects a file. */
+
+    width: 100%;
+    /* Allows the image to use the available width. */
+
+    max-width: 450px;
+    /* Prevents the preview from becoming too large. */
+
+    max-height: 500px;
+    /* Limits the height of the preview. */
+
+    object-fit: contain;
+    /* Keeps the original image proportions. */
+
+    margin: 25px auto 10px;
+    /* Centers the preview and adds spacing. */
+
+    border-radius: 10px;
+    /* Rounds the preview corners. */
+
+    border: 1px solid #d5dce5;
+    /* Adds a light border around the image. */
+
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+    /* Adds a subtle shadow. */
+}
+
+
+/* ---------------------------------------------------------
+   ANALYZE BUTTON
+--------------------------------------------------------- */
+
+button {
+    background-color: #1769aa;
+    /* Sets the button background color. */
+
+    color: white;
+    /* Makes the button text white. */
+
+    border: none;
+    /* Removes the default button border. */
+
+    padding: 13px 28px;
+    /* Adds space inside the button. */
+
+    margin-top: 15px;
+    /* Adds space above the button. */
+
+    border-radius: 7px;
+    /* Rounds the button corners. */
+
+    font-size: 16px;
+    /* Sets the button text size. */
+
+    font-weight: 600;
+    /* Makes the button text slightly bold. */
+
+    cursor: pointer;
+    /* Shows a pointer when hovering over the button. */
+
+    transition: 0.3s ease;
+    /* Makes hover changes smooth. */
+}
+
+button:hover {
+    background-color: #0e4f82;
+    /* Darkens the button when the mouse is over it. */
+
+    transform: translateY(-1px);
+    /* Moves the button slightly upward on hover. */
+}
+
+button:disabled {
+    background-color: #999999;
+    /* Makes the button gray while prediction is running. */
+
+    cursor: not-allowed;
+    /* Shows that the button cannot be clicked. */
+
+    transform: none;
+    /* Prevents the hover movement when disabled. */
+}
+
+
+/* ---------------------------------------------------------
+   LOADING MESSAGE
+--------------------------------------------------------- */
+
+#loading {
+    display: none;
+    /* Keeps the loading message hidden initially. */
+
+    margin-top: 20px;
+    /* Adds space above the loading message. */
+
+    text-align: center;
+    /* Centers the message. */
+
+    font-weight: bold;
+    /* Makes the message bold. */
+
+    color: #1769aa;
+    /* Uses blue text. */
+}
+
+
+/* ---------------------------------------------------------
+   RESULT SECTION
+--------------------------------------------------------- */
+
+#result {
+    display: none;
+    /* Hides the result card until prediction is completed. */
+}
+
+.result-box {
+    background-color: #f8fbff;
+    /* Gives the result area a light background. */
+
+    border-left: 5px solid #1769aa;
+    /* Adds a blue indicator on the left side. */
+
+    padding: 22px;
+    /* Adds space inside the result box. */
+
+    border-radius: 8px;
+    /* Rounds the result box corners. */
+}
+
+
+/* ---------------------------------------------------------
+   PREDICTION
+--------------------------------------------------------- */
+
+.prediction {
+    font-size: 30px;
+    /* Makes the predicted class large. */
+
+    font-weight: bold;
+    /* Makes the prediction bold. */
+
+    color: #12355b;
+    /* Uses dark blue for the prediction. */
+
+    text-transform: capitalize;
+    /* Converts "pneumonia" into "Pneumonia". */
+
+    margin-bottom: 15px;
+    /* Adds space below the prediction. */
+}
+
+
+/* ---------------------------------------------------------
+   CONFIDENCE AND UNCERTAINTY
+--------------------------------------------------------- */
+
+#confidence,
+#uncertainty {
+    font-weight: bold;
+    /* Makes the numerical values bold. */
+
+    color: #12355b;
+    /* Uses dark blue for the values. */
+}
+
+
+/* ---------------------------------------------------------
+   PROBABILITY SECTION
+--------------------------------------------------------- */
+
+.probability-row {
+    margin-top: 18px;
+    /* Adds space between probability rows. */
+}
+
+.probability-label {
+    display: flex;
+    /* Places the label and percentage on the same line. */
+
+    justify-content: space-between;
+    /* Puts the percentage at the right side. */
+
+    align-items: center;
+    /* Vertically aligns the text. */
+
+    margin-bottom: 6px;
+    /* Adds space between label and progress bar. */
+
+    font-size: 15px;
+    /* Sets the probability label size. */
+
+    font-weight: 600;
+    /* Makes the probability labels slightly bold. */
+}
+
+
+/* ---------------------------------------------------------
+   PROBABILITY BAR CONTAINER
+--------------------------------------------------------- */
+
+.bar-container {
+    width: 100%;
+    /* Makes the progress bar use the full available width. */
+
+    height: 16px;
+    /* Sets the height of the progress bar. */
+
+    background-color: #dfe5eb;
+    /* Sets the background of the empty progress bar. */
+
+    border-radius: 10px;
+    /* Rounds the progress bar corners. */
+
+    overflow: hidden;
+    /* Prevents the filled section from leaving the rounded area. */
+}
+
+
+/* ---------------------------------------------------------
+   PROBABILITY BAR
+--------------------------------------------------------- */
+
+.bar {
+    height: 100%;
+    /* Makes the filled bar use the full height. */
+
+    width: 0%;
+    /* Starts with zero width. */
+
+    background-color: #1769aa;
+    /* Sets the filled bar color. */
+
+    border-radius: 10px;
+    /* Rounds the filled bar. */
+
+    transition: width 0.6s ease;
+    /* Animates the bar when the prediction result is displayed. */
+}
+
+
+/* ---------------------------------------------------------
+   TRIAGE RESULT
+--------------------------------------------------------- */
+
+.triage {
+    margin-top: 25px;
+    /* Adds space above the triage section. */
+
+    padding: 18px;
+    /* Adds space inside the triage section. */
+
+    background-color: #fff8e6;
+    /* Gives the triage section a soft yellow background. */
+
+    border: 1px solid #f0d98c;
+    /* Adds a light border. */
+
+    border-radius: 8px;
+    /* Rounds the triage box corners. */
+}
+
+.triage strong {
+    color: #6b5200;
+    /* Makes the triage heading dark yellow/brown. */
+}
+
+#triage {
+    margin-bottom: 0;
+    /* Removes unnecessary bottom spacing. */
+
+    color: #444444;
+    /* Sets the triage text color. */
+
+    font-weight: 600;
+    /* Makes the recommendation slightly bold. */
+}
+
+
+/* ---------------------------------------------------------
+   ERROR MESSAGE
+--------------------------------------------------------- */
+
+#error {
+    display: none;
+    /* Hides the error message initially. */
+
+    margin-top: 20px;
+    /* Adds space above the error box. */
+
+    padding: 15px;
+    /* Adds space inside the error box. */
+
+    background-color: #ffe6e6;
+    /* Gives the error box a light red background. */
+
+    color: #a00000;
+    /* Sets dark red error text. */
+
+    border: 1px solid #f0aaaa;
+    /* Adds a light red border. */
+
+    border-radius: 8px;
+    /* Rounds the error box corners. */
+
+    font-weight: 600;
+    /* Makes the error message easier to notice. */
+}
+
+
+/* ---------------------------------------------------------
+   DISCLAIMER
+--------------------------------------------------------- */
+
+.disclaimer {
+    font-size: 13px !important;
+    /* Makes the medical disclaimer smaller. */
+
+    color: #666666 !important;
+    /* Uses gray text for the disclaimer. */
+
+    margin-top: 25px !important;
+    /* Adds space above the disclaimer. */
+
+    line-height: 1.6;
+    /* Improves readability of the disclaimer. */
+
+    padding: 12px;
+    /* Adds a little space around the disclaimer. */
+
+    background-color: #f1f1f1;
+    /* Gives the disclaimer a light gray background. */
+
+    border-radius: 6px;
+    /* Rounds the disclaimer corners. */
+}
+
+
+/* ---------------------------------------------------------
+   RESPONSIVE DESIGN FOR TABLETS
+--------------------------------------------------------- */
+
+@media (max-width: 768px) {
+
+    .container {
+        width: 94%;
+        /* Uses more screen width on tablets. */
+    }
+
+    .card {
+        padding: 25px;
+        /* Slightly reduces card padding. */
+    }
+
+    header h1 {
+        font-size: 26px;
+        /* Reduces the header size on smaller screens. */
+    }
+
+}
+
+
+/* ---------------------------------------------------------
+   RESPONSIVE DESIGN FOR MOBILE PHONES
+--------------------------------------------------------- */
+
+@media (max-width: 600px) {
+
+    header {
+        padding: 22px 15px;
+        /* Reduces header spacing on mobile. */
+    }
+
+    header h1 {
+        font-size: 22px;
+        /* Makes the main heading smaller. */
+    }
+
+    header p {
+        font-size: 13px;
+        /* Makes the subtitle smaller. */
+    }
+
+    .container {
+        width: 94%;
+        /* Gives the content some space from the screen edges. */
+
+        margin-top: 20px;
+        /* Reduces the top margin on mobile. */
+    }
+
+    .card {
+        padding: 20px;
+        /* Reduces card padding on small screens. */
+    }
+
+    .card h2 {
+        font-size: 21px;
+        /* Reduces card heading size. */
+    }
+
+    .upload-area {
+        padding: 25px 12px;
+        /* Reduces upload area spacing. */
+    }
+
+    .prediction {
+        font-size: 25px;
+        /* Reduces prediction text size. */
+    }
+
+    button {
+        width: 100%;
+        /* Makes the analyze button full width on mobile. */
+    }
+
+}
