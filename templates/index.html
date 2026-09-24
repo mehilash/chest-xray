@@ -2,1017 +2,211 @@
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
-    <!-- Defines the character encoding used by the webpage. -->
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Makes the webpage responsive on mobile, tablet and desktop screens. -->
-
     <title>Chest X-Ray Screening Tool</title>
-    <!-- Sets the title displayed in the browser tab. -->
-
-
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
-
-        /* -------------------------------------------------
-           GENERAL PAGE STYLE
-        ------------------------------------------------- */
-
-        * {
-            box-sizing: border-box;
-            /* Makes width and height calculations easier. */
-        }
-
-        body {
-            margin: 0;
-            /* Removes the default browser margin. */
-
-            font-family: Arial, sans-serif;
-            /* Sets the font used throughout the webpage. */
-
-            background: #f4f7fb;
-            /* Sets a light background color. */
-
-            color: #222;
-            /* Sets the main text color. */
-        }
-
-
-        /* -------------------------------------------------
-           HEADER
-        ------------------------------------------------- */
-
-        header {
-            background: #12355b;
-            /* Creates the main header background. */
-
-            color: white;
-            /* Makes header text white. */
-
-            padding: 25px;
-            /* Adds space inside the header. */
-
-            text-align: center;
-            /* Centers the header content. */
-        }
-
-        header h1 {
-            margin: 0;
-            /* Removes default heading margin. */
-
-            font-size: 30px;
-            /* Sets the heading size. */
-        }
-
-        header p {
-            margin-top: 10px;
-            /* Adds space above the subtitle. */
-
-            margin-bottom: 0;
-            /* Removes bottom margin. */
-
-            font-size: 15px;
-            /* Sets subtitle size. */
-        }
-
-
-        /* -------------------------------------------------
-           MAIN CONTAINER
-        ------------------------------------------------- */
-
-        .container {
-            width: 90%;
-            /* Uses 90% of the available screen width. */
-
-            max-width: 1000px;
-            /* Prevents the content from becoming too wide. */
-
-            margin: 35px auto;
-            /* Centers the container and adds vertical spacing. */
-        }
-
-
-        /* -------------------------------------------------
-           CARD
-        ------------------------------------------------- */
-
-        .card {
-            background: white;
-            /* Creates a white card. */
-
-            padding: 30px;
-            /* Adds space inside the card. */
-
-            border-radius: 12px;
-            /* Rounds the card corners. */
-
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-            /* Adds a subtle shadow. */
-
-            margin-bottom: 25px;
-            /* Adds space below the card. */
-        }
-
-        .card h2 {
-            margin-top: 0;
-            /* Removes the default top margin. */
-        }
-
-
-        /* -------------------------------------------------
-           FILE UPLOAD
-        ------------------------------------------------- */
-
-        .upload-area {
-            border: 2px dashed #8ca6c1;
-            /* Creates a dashed upload border. */
-
-            border-radius: 10px;
-            /* Rounds the upload area corners. */
-
-            padding: 35px;
-            /* Adds space inside the upload area. */
-
-            text-align: center;
-            /* Centers the upload content. */
-
-            background: #f8fbff;
-            /* Gives the upload area a light background. */
-        }
-
-        input[type="file"] {
-            margin-top: 15px;
-            /* Adds space above the file selector. */
-
-            font-size: 15px;
-            /* Sets the file input text size. */
-        }
-
-
-        /* -------------------------------------------------
-           IMAGE PREVIEW
-        ------------------------------------------------- */
-
-        #preview {
-            display: none;
-            /* Keeps the preview hidden until an image is selected. */
-
-            max-width: 400px;
-            /* Limits the preview width. */
-
-            width: 100%;
-            /* Allows the image to shrink on small screens. */
-
-            margin: 25px auto;
-            /* Centers the image. */
-
-            border-radius: 10px;
-            /* Rounds the image corners. */
-
-            border: 1px solid #ddd;
-            /* Adds a light border. */
-        }
-
-
-        /* -------------------------------------------------
-           BUTTON
-        ------------------------------------------------- */
-
-        button {
-            background: #1769aa;
-            /* Sets the button background. */
-
-            color: white;
-            /* Makes the button text white. */
-
-            border: none;
-            /* Removes the default border. */
-
-            padding: 13px 28px;
-            /* Adds space inside the button. */
-
-            border-radius: 7px;
-            /* Rounds the button corners. */
-
-            font-size: 16px;
-            /* Sets the button text size. */
-
-            cursor: pointer;
-            /* Shows a pointer when hovering over the button. */
-
-            margin-top: 15px;
-            /* Adds space above the button. */
-        }
-
-        button:hover {
-            background: #0e4f82;
-            /* Changes the button color when the mouse is over it. */
-        }
-
-        button:disabled {
-            background: #999;
-            /* Makes the button gray when disabled. */
-
-            cursor: not-allowed;
-            /* Shows that the button cannot currently be clicked. */
-        }
-
-
-        /* -------------------------------------------------
-           LOADING MESSAGE
-        ------------------------------------------------- */
-
-        #loading {
-            display: none;
-            /* Hides the loading message initially. */
-
-            text-align: center;
-            /* Centers the loading text. */
-
-            margin-top: 20px;
-            /* Adds space above the message. */
-
-            font-weight: bold;
-            /* Makes the message bold. */
-        }
-
-
-        /* -------------------------------------------------
-           RESULTS
-        ------------------------------------------------- */
-
-        #result {
-            display: none;
-            /* Hides the result section until prediction is complete. */
-        }
-
-        .result-box {
-            background: #f8fbff;
-            /* Gives the result box a light background. */
-
-            border-left: 5px solid #1769aa;
-            /* Adds a visual indicator on the left. */
-
-            padding: 20px;
-            /* Adds space inside the result box. */
-
-            border-radius: 8px;
-            /* Rounds the result box corners. */
-        }
-
-        .prediction {
-            font-size: 26px;
-            /* Makes the prediction large. */
-
-            font-weight: bold;
-            /* Makes the prediction bold. */
-
-            text-transform: capitalize;
-            /* Displays normal/pneumonia/tuberculosis with capitalization. */
-        }
-
-
-        /* -------------------------------------------------
-           PROBABILITY BARS
-        ------------------------------------------------- */
-
         .probability-row {
             margin-top: 15px;
-            /* Adds space between probability rows. */
         }
-
         .probability-label {
             display: flex;
-            /* Places label and percentage on one line. */
-
             justify-content: space-between;
-            /* Places the percentage on the right side. */
-
-            margin-bottom: 5px;
-            /* Adds space below the label. */
+            margin-bottom: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: capitalize;
         }
-
         .bar-container {
             width: 100%;
-            /* Makes the bar use the available width. */
-
-            height: 15px;
-            /* Sets the bar height. */
-
-            background: #ddd;
-            /* Sets the empty bar background. */
-
+            height: 16px;
+            background-color: #dfe5eb;
             border-radius: 10px;
-            /* Rounds the bar corners. */
-
             overflow: hidden;
-            /* Keeps the filled bar inside the rounded container. */
         }
-
         .bar {
             height: 100%;
-            /* Makes the filled bar use the full bar height. */
-
             width: 0%;
-            /* Starts the bar at zero width. */
-
-            background: #1769aa;
-            /* Sets the filled bar color. */
-
-            transition: width 0.5s ease;
-            /* Animates the bar when its width changes. */
+            background-color: #1769aa;
+            border-radius: 10px;
+            transition: width 0.6s ease;
         }
-
-
-        /* -------------------------------------------------
-           TRIAGE
-        ------------------------------------------------- */
-
-        .triage {
-            margin-top: 20px;
-            /* Adds space above the triage result. */
-
-            padding: 15px;
-            /* Adds space inside the triage box. */
-
-            background: #fff8e6;
-            /* Gives the triage section a light background. */
-
-            border-radius: 8px;
-            /* Rounds the triage box corners. */
-        }
-
-
-        /* -------------------------------------------------
-           ERROR MESSAGE
-        ------------------------------------------------- */
-
-        #error {
-            display: none;
-            /* Hides the error message initially. */
-
-            margin-top: 20px;
-            /* Adds space above the error. */
-
-            padding: 15px;
-            /* Adds space inside the error box. */
-
-            background: #ffe6e6;
-            /* Gives the error box a light red background. */
-
-            color: #a00000;
-            /* Makes the error text dark red. */
-
-            border-radius: 8px;
-            /* Rounds the error box corners. */
-        }
-
-
-        /* -------------------------------------------------
-           DISCLAIMER
-        ------------------------------------------------- */
-
-        .disclaimer {
-            font-size: 13px;
-            /* Makes disclaimer text smaller. */
-
-            color: #666;
-            /* Uses gray text for the disclaimer. */
-
-            margin-top: 20px;
-            /* Adds space above the disclaimer. */
-
-            line-height: 1.5;
-            /* Improves readability. */
-        }
-
-
-        /* -------------------------------------------------
-           MOBILE RESPONSIVE DESIGN
-        ------------------------------------------------- */
-
-        @media (max-width: 600px) {
-
-            header h1 {
-                font-size: 23px;
-                /* Makes the heading smaller on mobile. */
-            }
-
-            .card {
-                padding: 20px;
-                /* Reduces card padding on smaller screens. */
-            }
-
-            .upload-area {
-                padding: 25px 15px;
-                /* Reduces upload area padding on mobile. */
-            }
-
-        }
-
     </style>
-
 </head>
-
 
 <body>
 
-
-    <!-- -------------------------------------------------
-         HEADER
-    ------------------------------------------------- -->
-
+    <!-- HEADER -->
     <header>
-
-        <h1>
-            Chest X-Ray Screening Tool
-        </h1>
-
-        <p>
-            Pneumonia and Tuberculosis Screening with Confidence Scoring
-        </p>
-
+        <h1>Chest X-Ray Screening Tool</h1>
+        <p>Pneumonia and Tuberculosis Screening with Confidence & Uncertainty Scoring</p>
     </header>
 
-
-    <!-- -------------------------------------------------
-         MAIN CONTENT
-    ------------------------------------------------- -->
-
+    <!-- MAIN CONTAINER -->
     <div class="container">
 
-
-        <!-- -------------------------------------------------
-             UPLOAD CARD
-        ------------------------------------------------- -->
-
+        <!-- UPLOAD CARD -->
         <div class="card">
-
-            <h2>
-                Upload Chest X-Ray
-            </h2>
-
-            <p>
-                Select a chest X-ray image to perform screening.
-            </p>
-
+            <h2>Upload Chest X-Ray</h2>
+            <p>Select or upload a chest X-ray image (DICOM / JPEG / PNG) to perform automated screening.</p>
 
             <div class="upload-area">
-
-                <label for="imageInput">
-                    Select X-ray Image
+                <label for="imageInput" style="cursor: pointer; font-weight: bold; color: #1769aa;">
+                    Choose X-ray Image File
                 </label>
+                <br>
+                <input type="file" id="imageInput" accept="image/*">
+                
+                <img id="preview" alt="X-ray Preview">
 
                 <br>
-
-                <input
-                    type="file"
-                    id="imageInput"
-                    accept="image/*"
-                >
-                <!-- Allows the user to select an image file. -->
-
-
-                <img
-                    id="preview"
-                    alt="X-ray Preview"
-                >
-                <!-- Displays a preview of the selected X-ray. -->
-
-
-                <br>
-
-                <button
-                    id="predictButton"
-                    onclick="predictImage()"
-                >
+                <button id="predictButton" onclick="predictImage()">
                     Analyze X-Ray
                 </button>
-                <!-- Starts the prediction process. -->
-
             </div>
-
 
             <div id="loading">
-                Analyzing X-ray... Please wait.
+                Analyzing X-ray radiograph... Please wait.
             </div>
-            <!-- Displays while the backend is processing the image. -->
-
 
             <div id="error"></div>
-            <!-- Displays errors returned by the backend. -->
-
         </div>
 
-
-
-        <!-- -------------------------------------------------
-             RESULT CARD
-        ------------------------------------------------- -->
-
-        <div
-            class="card"
-            id="result"
-        >
-
-            <h2>
-                Screening Result
-            </h2>
-
+        <!-- RESULT CARD -->
+        <div class="card" id="result" style="display: none;">
+            <h2>Screening Result</h2>
 
             <div class="result-box">
+                <p style="margin: 0; color: #666; font-size: 14px;">Predicted Classification:</p>
+                <div class="prediction" id="prediction">-</div>
 
-
-                <p>
-                    Predicted Class:
-                </p>
-
-
-                <div
-                    class="prediction"
-                    id="prediction"
-                >
-                    -
-                </div>
-                <!-- Displays Normal, Pneumonia or Tuberculosis. -->
-
-
-                <p>
-                    Confidence:
-                    <strong id="confidence">
-                        -
-                    </strong>
-                </p>
-                <!-- Displays the confidence score. -->
-
-
-                <p>
-                    Uncertainty:
-                    <strong id="uncertainty">
-                        -
-                    </strong>
-                </p>
-                <!-- Displays the uncertainty score. -->
-
-
-                <!-- -----------------------------------------
-                     PROBABILITY SECTION
-                ------------------------------------------ -->
-
-                <h3>
-                    Class Probabilities
-                </h3>
-
-
-                <!-- NORMAL -->
-
-                <div class="probability-row">
-
-                    <div class="probability-label">
-
-                        <span>
-                            Normal
-                        </span>
-
-                        <span id="normalValue">
-                            0%
-                        </span>
-
-                    </div>
-
-                    <div class="bar-container">
-
-                        <div
-                            class="bar"
-                            id="normalBar"
-                        ></div>
-
-                    </div>
-
+                <div style="display: flex; gap: 20px; margin-bottom: 15px; flex-wrap: wrap;">
+                    <p style="margin: 0;">Confidence: <strong id="confidence" style="color: #1769aa;">-</strong></p>
+                    <p style="margin: 0;">Uncertainty Score: <strong id="uncertainty" style="color: #555;">-</strong></p>
                 </div>
 
-
-                <!-- PNEUMONIA -->
-
-                <div class="probability-row">
-
-                    <div class="probability-label">
-
-                        <span>
-                            Pneumonia
-                        </span>
-
-                        <span id="pneumoniaValue">
-                            0%
-                        </span>
-
-                    </div>
-
-                    <div class="bar-container">
-
-                        <div
-                            class="bar"
-                            id="pneumoniaBar"
-                        ></div>
-
-                    </div>
-
+                <!-- DYNAMIC PROBABILITIES SECTION -->
+                <h3 style="margin-top: 20px; font-size: 18px; color: #12355b;">Class Probabilities</h3>
+                <div id="probabilitiesContainer">
+                    <!-- Progress bars dynamically injected here -->
                 </div>
 
-
-                <!-- TUBERCULOSIS -->
-
-                <div class="probability-row">
-
-                    <div class="probability-label">
-
-                        <span>
-                            Tuberculosis
-                        </span>
-
-                        <span id="tuberculosisValue">
-                            0%
-                        </span>
-
-                    </div>
-
-                    <div class="bar-container">
-
-                        <div
-                            class="bar"
-                            id="tuberculosisBar"
-                        ></div>
-
-                    </div>
-
+                <!-- TRIAGE SECTION -->
+                <div class="triage" style="margin-top: 20px;">
+                    <strong id="triageLevel">Triage Recommendation:</strong>
+                    <p id="triage" style="margin-top: 5px; font-size: 14px;">-</p>
                 </div>
-
-
-                <!-- -----------------------------------------
-                     TRIAGE SECTION
-                ------------------------------------------ -->
-
-                <div class="triage">
-
-                    <strong>
-                        Triage Recommendation:
-                    </strong>
-
-                    <p id="triage">
-                        -
-                    </p>
-
-                </div>
-
             </div>
 
-
             <p class="disclaimer">
-
-                This system is a prototype screening and
-                decision-support tool. It is not intended to
-                provide a definitive medical diagnosis.
-                Clinical assessment by a qualified healthcare
-                professional is required.
-
+                <strong>Clinical Disclaimer:</strong> This system is a deep learning screening and decision-support tool. It is not intended as a replacement for definitive clinical diagnosis by a licensed radiologist or healthcare professional.
             </p>
-
         </div>
 
     </div>
 
-
-
-    <!-- -------------------------------------------------
-         JAVASCRIPT
-    ------------------------------------------------- -->
-
+    <!-- SCRIPT -->
     <script>
+        // Image preview
+        document.getElementById("imageInput").addEventListener("change", function () {
+            const file = this.files[0];
+            const preview = document.getElementById("preview");
 
+            if (file) {
+                preview.src = URL.createObjectURL(file);
+                preview.style.display = "block";
+            }
+        });
 
-        // -------------------------------------------------
-        // IMAGE PREVIEW
-        // -------------------------------------------------
-
-        document
-            .getElementById("imageInput")
-            .addEventListener("change", function () {
-
-                // Gets the selected image file.
-
-                const file = this.files[0];
-
-                // Gets the preview image element.
-
-                const preview =
-                    document.getElementById("preview");
-
-
-                // Check whether a file was selected.
-
-                if (file) {
-
-                    // Creates a temporary URL for the image.
-
-                    preview.src =
-                        URL.createObjectURL(file);
-
-                    // Displays the image preview.
-
-                    preview.style.display = "block";
-
-                }
-
-            });
-
-
-
-        // -------------------------------------------------
-        // PREDICT IMAGE
-        // -------------------------------------------------
-
+        // Predict image function
         async function predictImage() {
-
-            // Gets the file input element.
-
-            const imageInput =
-                document.getElementById("imageInput");
-
-
-            // Gets the selected file.
-
-            const file =
-                imageInput.files[0];
-
-
-            // Check whether the user selected an image.
+            const imageInput = document.getElementById("imageInput");
+            const file = imageInput.files[0];
 
             if (!file) {
-
-                showError(
-                    "Please select a chest X-ray image first."
-                );
-
+                showError("Please select a chest X-ray image first.");
                 return;
-
             }
 
+            const button = document.getElementById("predictButton");
+            const loading = document.getElementById("loading");
+            const result = document.getElementById("result");
+            const errorDiv = document.getElementById("error");
 
-            // Get webpage elements.
-
-            const button =
-                document.getElementById("predictButton");
-
-            const loading =
-                document.getElementById("loading");
-
-            const result =
-                document.getElementById("result");
-
-
-            // Hide previous error.
-
-            document.getElementById("error").style.display =
-                "none";
-
-
-            // Hide previous result.
-
+            errorDiv.style.display = "none";
             result.style.display = "none";
-
-
-            // Disable the button while processing.
-
             button.disabled = true;
-
-
-            // Display loading message.
-
             loading.style.display = "block";
 
-
-            // -------------------------------------------------
-            // CREATE FORM DATA
-            // -------------------------------------------------
-
             const formData = new FormData();
-
-            // The name "image" must match request.files["image"]
-            // in app.py.
-
             formData.append("image", file);
 
-
             try {
-
-                // -------------------------------------------------
-                // SEND IMAGE TO FLASK BACKEND
-                // -------------------------------------------------
-
-                const response = await fetch(
-                    "/predict",
-                    {
-                        method: "POST",
-                        body: formData
-                    }
-                );
-                // Sends the image to the Flask /predict endpoint.
-
-
-                // Convert backend response into JSON.
+                const response = await fetch("/predict", {
+                    method: "POST",
+                    body: formData
+                });
 
                 const data = await response.json();
 
-
-                // Check whether the backend returned an error.
-
                 if (!response.ok) {
-
-                    throw new Error(
-                        data.error || "Prediction failed."
-                    );
-
+                    throw new Error(data.error || "Prediction failed.");
                 }
 
+                // Populate main prediction
+                document.getElementById("prediction").textContent = data.prediction;
+                document.getElementById("confidence").textContent = (data.confidence * 100).toFixed(2) + "%";
+                document.getElementById("uncertainty").textContent = (data.uncertainty * 100).toFixed(2) + "%";
 
-                // -------------------------------------------------
-                // DISPLAY PREDICTION
-                // -------------------------------------------------
+                // Populate dynamic probability bars
+                const probContainer = document.getElementById("probabilitiesContainer");
+                probContainer.innerHTML = "";
 
-                document.getElementById(
-                    "prediction"
-                ).textContent =
-                    data.prediction;
+                for (const [className, prob] of Object.entries(data.probabilities)) {
+                    const percentage = (prob * 100).toFixed(2) + "%";
+                    
+                    const row = document.createElement("div");
+                    row.className = "probability-row";
+                    row.innerHTML = `
+                        <div class="probability-label">
+                            <span>${className}</span>
+                            <span>${percentage}</span>
+                        </div>
+                        <div class="bar-container">
+                            <div class="bar" style="width: 0%;" data-target="${percentage}"></div>
+                        </div>
+                    `;
+                    probContainer.appendChild(row);
+                }
 
+                // Animate bars
+                setTimeout(() => {
+                    document.querySelectorAll(".bar[data-target]").forEach(bar => {
+                        bar.style.width = bar.getAttribute("data-target");
+                    });
+                }, 50);
 
-                // -------------------------------------------------
-                // DISPLAY CONFIDENCE
-                // -------------------------------------------------
-
-                document.getElementById(
-                    "confidence"
-                ).textContent =
-                    formatPercentage(data.confidence);
-
-
-                // -------------------------------------------------
-                // DISPLAY UNCERTAINTY
-                // -------------------------------------------------
-
-                document.getElementById(
-                    "uncertainty"
-                ).textContent =
-                    formatPercentage(data.uncertainty);
-
-
-                // -------------------------------------------------
-                // DISPLAY PROBABILITIES
-                // -------------------------------------------------
-
-                const normalProbability =
-                    data.probabilities.normal;
-
-
-                const pneumoniaProbability =
-                    data.probabilities.pneumonia;
-
-
-                const tuberculosisProbability =
-                    data.probabilities.tuberculosis;
-
-
-                // Update Normal percentage.
-
-                document.getElementById(
-                    "normalValue"
-                ).textContent =
-                    formatPercentage(normalProbability);
-
-
-                // Update Pneumonia percentage.
-
-                document.getElementById(
-                    "pneumoniaValue"
-                ).textContent =
-                    formatPercentage(pneumoniaProbability);
-
-
-                // Update Tuberculosis percentage.
-
-                document.getElementById(
-                    "tuberculosisValue"
-                ).textContent =
-                    formatPercentage(tuberculosisProbability);
-
-
-                // Update Normal progress bar.
-
-                document.getElementById(
-                    "normalBar"
-                ).style.width =
-                    (normalProbability * 100) + "%";
-
-
-                // Update Pneumonia progress bar.
-
-                document.getElementById(
-                    "pneumoniaBar"
-                ).style.width =
-                    (pneumoniaProbability * 100) + "%";
-
-
-                // Update Tuberculosis progress bar.
-
-                document.getElementById(
-                    "tuberculosisBar"
-                ).style.width =
-                    (tuberculosisProbability * 100) + "%";
-
-
-                // -------------------------------------------------
-                // DISPLAY TRIAGE
-                // -------------------------------------------------
-
-                document.getElementById(
-                    "triage"
-                ).textContent =
-                    data.triage;
-
-
-                // Display the result card.
+                // Populate triage
+                document.getElementById("triageLevel").textContent = "Triage: " + data.triage;
+                document.getElementById("triage").textContent = data.recommendation;
 
                 result.style.display = "block";
 
-            }
-
-
-            catch (error) {
-
-                // Display any error that occurred.
-
+            } catch (error) {
                 showError(error.message);
-
-            }
-
-
-            finally {
-
-                // Hide loading message.
-
+            } finally {
                 loading.style.display = "none";
-
-
-                // Enable the button again.
-
                 button.disabled = false;
-
             }
-
         }
-
-
-
-        // -------------------------------------------------
-        // FORMAT PERCENTAGE
-        // -------------------------------------------------
-
-        function formatPercentage(value) {
-
-            // Converts a decimal such as 0.9124
-            // into 91.24%.
-
-            return (value * 100).toFixed(2) + "%";
-
-        }
-
-
-
-        // -------------------------------------------------
-        // SHOW ERROR
-        // -------------------------------------------------
 
         function showError(message) {
-
-            // Gets the error element.
-
-            const error =
-                document.getElementById("error");
-
-
-            // Places the error message inside the element.
-
-            error.textContent = message;
-
-
-            // Displays the error message.
-
-            error.style.display = "block";
-
+            const errorDiv = document.getElementById("error");
+            errorDiv.textContent = message;
+            errorDiv.style.display = "block";
         }
-
     </script>
-
 
 </body>
 

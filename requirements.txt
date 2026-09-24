@@ -4,3 +4,5 @@ torchvision
 Pillow
 numpy
 opencv-python
+transformers
+accelerate

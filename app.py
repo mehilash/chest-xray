@@ -1,412 +1,207 @@
-from flask import Flask, request, jsonify, render_template
-# Flask is used to create the web backend and API.
-
-import torch
-# PyTorch is used to load and run the trained deep learning model.
-
-import torch.nn.functional as F
-# F.softmax() is used to convert model outputs into class probabilities.
-from PIL import Image # PIL is used to open uploaded X-ray images.
-
-from torchvision import transforms
-# torchvision transforms are used for image preprocessing.
-
-import io
-# io is used to read the uploaded image from memory.
-
-import numpy as np
-# NumPy is used for numerical calculations.
+# ============================================================
+# Chest X-Ray Screening System - Backend Engine
+# Classes: Normal, Pneumonia, & Tuberculosis
+# ============================================================
 
 import os
-# os is used for handling file paths.
+import sys
+import warnings
 
+# Suppress environment and library logs
+warnings.filterwarnings("ignore")
+os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
+os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
+os.environ["TRANSFORMERS_VERBOSITY"] = "error"
+os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "0"
 
-# ---------------------------------------------------------
-# CREATE FLASK APPLICATION
-# ---------------------------------------------------------
+import io
+import torch
+import numpy as np
+from PIL import Image
+from flask import Flask, render_template, request, jsonify
+
+# Silence hub and downloader output during weight loading
+_devnull = open(os.devnull, "w")
+_old_stderr = sys.stderr
+sys.stderr = _devnull
+
+import transformers
+transformers.logging.set_verbosity_error()
+transformers.utils.logging.disable_progress_bar()
+from transformers import AutoImageProcessor, AutoModelForImageClassification
+
+# ============================================================
+# 1. CREATE FLASK APPLICATION
+# ============================================================
 
 app = Flask(__name__)
-# Creates the Flask application.
 
-
-# ---------------------------------------------------------
-# DEVICE CONFIGURATION
-# ---------------------------------------------------------
+# ============================================================
+# 2. DEVICE CONFIGURATION
+# ============================================================
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-# Uses the GPU if CUDA is available; otherwise, uses the CPU.
 
+# ============================================================
+# 3. INITIALIZE DEEP LEARNING SCREENING ARCHITECTURE
+# ============================================================
 
-# ---------------------------------------------------------
-# CLASS NAMES
-# ---------------------------------------------------------
+processor = AutoImageProcessor.from_pretrained("google/vit-base-patch16-224")
 
-CLASS_NAMES = {
-    0: "normal",
-    1: "pneumonia",
-    2: "tuberculosis"
-}
-# These class numbers must match the labels used during training.
+# Load Vision Models
+pneumonia_model = AutoModelForImageClassification.from_pretrained("dima806/chest_xray_pneumonia_detection")
+pneumonia_model.to(DEVICE)
+pneumonia_model.eval()
 
+tb_model = AutoModelForImageClassification.from_pretrained("runaksh/chest_xray_tuberculosis_detection")
+tb_model.to(DEVICE)
+tb_model.eval()
 
-# ---------------------------------------------------------
-# MODEL CHECKPOINT PATH
-# ---------------------------------------------------------
+# Restore standard error stream
+sys.stderr = _old_stderr
+_devnull.close()
 
-MODEL_PATH = "best_chest_xray_model (2).pth"
-# Specifies the exact filename of your trained model.
+# ============================================================
+# 4. CLINICAL TRIAGE RECOMMENDATION
+# ============================================================
 
-
-# ---------------------------------------------------------
-# IMPORT YOUR MODEL ARCHITECTURE
-# ---------------------------------------------------------
-
-from model import ChestXRayModel
-# Imports the same model architecture that was used during training.
-
-
-# ---------------------------------------------------------
-# CREATE MODEL
-# ---------------------------------------------------------
-
-model = ChestXRayModel(
-    num_classes=3,
-    dropout_rate=0.5
-)
-# Creates the DenseNet121 model with 3 output classes.
-# IMPORTANT: dropout_rate must be the same value used during training.
-
-
-# ---------------------------------------------------------
-# LOAD TRAINED MODEL
-# ---------------------------------------------------------
-
-checkpoint = torch.load(
-    MODEL_PATH,
-    map_location=DEVICE
-)
-# Loads the trained model checkpoint from the .pth file.
-
-
-model.load_state_dict(
-    checkpoint["model_state_dict"]
-)
-# Loads the learned weights into the model.
-
-
-model = model.to(DEVICE)
-# Moves the model to GPU or CPU.
-
-
-model.eval()
-# Puts the model into evaluation mode for prediction.
-
-
-# ---------------------------------------------------------
-# IMAGE PREPROCESSING
-# ---------------------------------------------------------
-
-transform = transforms.Compose([
-    transforms.Resize((224, 224)),
-    # Resizes the X-ray image to 224 x 224 pixels.
-
-    transforms.Grayscale(num_output_channels=3),
-    # Converts grayscale X-ray images into 3 channels
-    # because DenseNet121 expects 3-channel input.
-
-    transforms.ToTensor(),
-    # Converts the image into a PyTorch tensor.
-
-    transforms.Normalize(
-        mean=[0.485, 0.456, 0.406],
-        std=[0.229, 0.224, 0.225]
-    )
-    # Normalizes the image using ImageNet normalization.
-])
-# IMPORTANT: preprocessing should match the preprocessing used during training.
-
-
-# ---------------------------------------------------------
-# MC DROPOUT PREDICTION
-# ---------------------------------------------------------
-
-def mc_dropout_predict(image_tensor, num_samples=20):
-    """
-    Performs multiple stochastic predictions using
-    Monte Carlo Dropout to estimate uncertainty.
-    """
-
-    model.train()
-    # Enables Dropout layers so each prediction is slightly different.
-    # BatchNorm behavior can also change here, so if your training setup
-    # requires keeping BatchNorm in eval mode, adjust this accordingly.
-
-    predictions = []
-    # Creates an empty list to store probability predictions.
-
-
-    with torch.no_grad():
-        # Gradients are not required during prediction.
-
-        for _ in range(num_samples):
-            # Performs multiple forward passes.
-
-            outputs = model(image_tensor)
-            # Sends the X-ray image through the trained model.
-
-            probabilities = F.softmax(outputs, dim=1)
-            # Converts raw model outputs into probabilities.
-
-            predictions.append(
-                probabilities.cpu().numpy()
-            )
-            # Saves the probabilities for this prediction.
-
-
-    model.eval()
-    # Returns the model to normal evaluation mode.
-
-
-    predictions = np.array(predictions)
-    # Converts the list of predictions into a NumPy array.
-
-
-    mean_probabilities = np.mean(
-        predictions,
-        axis=0
-    )
-    # Calculates the average probability across all MC Dropout predictions.
-
-
-    prediction_variation = np.std(
-        predictions,
-        axis=0
-    )
-    # Calculates how much the predictions vary.
-
-
-    predicted_class = np.argmax(
-        mean_probabilities,
-        axis=1
-    )[0]
-    # Selects the class with the highest average probability.
-
-
-    confidence = float(
-        mean_probabilities[0][predicted_class]
-    )
-    # Gets the probability of the predicted class.
-
-
-    uncertainty = float(
-        np.mean(prediction_variation[0])
-    )
-    # Calculates a simple uncertainty score from prediction variation.
-
-
-    return (
-        predicted_class,
-        confidence,
-        uncertainty,
-        mean_probabilities[0]
-    )
-    # Returns the prediction and confidence/uncertainty information.
-
-
-# ---------------------------------------------------------
-# TRIAGE RECOMMENDATION
-# ---------------------------------------------------------
-
-def get_triage_recommendation(confidence, uncertainty):
-    """
-    Converts confidence and uncertainty into a simple
-    prototype triage recommendation.
-    """
-
-    if confidence >= 0.80 and uncertainty < 0.10:
-        # High confidence and low uncertainty.
-
-        return "High Confidence - Screening Result"
-
-    elif confidence >= 0.60 and uncertainty < 0.20:
-        # Moderate confidence and moderate uncertainty.
-
-        return "Radiologist Review"
-
+def get_triage_recommendation(predicted_label, confidence, uncertainty):
+    clean_label = predicted_label.strip().lower()
+    
+    if clean_label == "normal" and confidence >= 0.70:
+        return {
+            "level": "Low Risk - Normal Radiograph",
+            "recommendation": "No acute radiographic signs of Pneumonia or Tuberculosis detected. Routine clinical assessment."
+        }
+    elif clean_label == "tuberculosis":
+        return {
+            "level": "High Priority - Tuberculosis Screening Alert",
+            "recommendation": "Radiographic findings consistent with Tuberculosis. Prompt clinical evaluation, sputum analysis, and specialist review recommended."
+        }
+    elif clean_label == "pneumonia":
+        return {
+            "level": "Urgent - Pneumonia Screening Alert",
+            "recommendation": "Radiographic findings consistent with Pneumonia. Prompt clinical assessment and treatment protocol recommended."
+        }
+    elif confidence >= 0.60:
+        return {
+            "level": "Radiologist Review Required",
+            "recommendation": "Moderate confidence or borderline lung opacity. Radiologist review recommended."
+        }
     else:
-        # Low confidence or high uncertainty.
+        return {
+            "level": "Specialist Review / Indeterminate",
+            "recommendation": "High uncertainty detected. Supplementary imaging or clinical correlation advised."
+        }
 
-        return "Specialist Review / Further Assessment"
-
-
-# ---------------------------------------------------------
-# HOME PAGE
-# ---------------------------------------------------------
+# ============================================================
+# 5. ROUTES
+# ============================================================
 
 @app.route("/")
 def home():
-    # This route displays the frontend page.
-
     return render_template("index.html")
-    # Loads templates/index.html.
-
-
-# ---------------------------------------------------------
-# PREDICTION API
-# ---------------------------------------------------------
 
 @app.route("/predict", methods=["POST"])
 def predict():
-    # This API receives an uploaded X-ray and returns prediction results.
-
     try:
-
-        # -------------------------------------------------
-        # CHECK WHETHER IMAGE WAS UPLOADED
-        # -------------------------------------------------
-
         if "image" not in request.files:
-            # Checks whether the frontend sent an image.
-
-            return jsonify({
-                "error": "No image uploaded."
-            }), 400
-            # Returns an error if no image was provided.
-
+            return jsonify({"error": "No image was uploaded."}), 400
 
         file = request.files["image"]
-        # Gets the uploaded image file.
-
-
         if file.filename == "":
-            # Checks whether the filename is empty.
+            return jsonify({"error": "No image was selected."}), 400
 
-            return jsonify({
-                "error": "No image selected."
-            }), 400
+        # Open image and convert to RGB
+        image = Image.open(io.BytesIO(file.read())).convert("RGB")
 
+        # Process image input
+        inputs = processor(images=image, return_tensors="pt").to(DEVICE)
 
-        # -------------------------------------------------
-        # OPEN IMAGE
-        # -------------------------------------------------
+        with torch.no_grad():
+            # 1. Pneumonia evaluation
+            p_outputs = pneumonia_model(**inputs)
+            p_probs = torch.softmax(p_outputs.logits, dim=-1)[0].cpu().numpy()
+            p_norm = float(p_probs[0])
+            p_pneu = float(p_probs[1])
 
-        image = Image.open(
-            io.BytesIO(file.read())
-        )
-        # Reads the uploaded image into memory and opens it with PIL.
+            # 2. Tuberculosis evaluation
+            tb_outputs = tb_model(**inputs)
+            tb_probs = torch.softmax(tb_outputs.logits, dim=-1)[0].cpu().numpy()
+            tb_norm = float(tb_probs[0])
+            tb_tb = float(tb_probs[1])
 
+        # Joint Calibrated Likelihood Computation:
+        prob_normal_joint = p_norm * tb_norm
+        prob_pneumonia_joint = p_pneu * tb_norm
+        prob_tb_joint = tb_tb * p_norm
 
-        image = image.convert("RGB")
-        # Converts the image to RGB format.
+        if p_pneu > 0.5 and tb_tb > 0.5:
+            if tb_tb > p_pneu:
+                prob_tb_joint = tb_tb
+                prob_pneumonia_joint = p_pneu * 0.5
+            else:
+                prob_pneumonia_joint = p_pneu
+                prob_tb_joint = tb_tb * 0.5
 
-
-        # -------------------------------------------------
-        # PREPROCESS IMAGE
-        # -------------------------------------------------
-
-        input_tensor = transform(image)
-        # Applies resizing, grayscale conversion, tensor conversion
-        # and normalization.
-
-
-        input_tensor = input_tensor.unsqueeze(0)
-        # Adds the batch dimension.
-        # Shape changes from [3, 224, 224] to [1, 3, 224, 224].
-
-
-        input_tensor = input_tensor.to(DEVICE)
-        # Moves the image tensor to GPU or CPU.
-
-
-        # -------------------------------------------------
-        # RUN MC DROPOUT
-        # -------------------------------------------------
-
-        (
-            predicted_class,
-            confidence,
-            uncertainty,
-            probabilities
-        ) = mc_dropout_predict(
-            input_tensor,
-            num_samples=20
-        )
-        # Performs 20 stochastic predictions.
-
-
-        # -------------------------------------------------
-        # GET CLASS NAME
-        # -------------------------------------------------
-
-        predicted_label = CLASS_NAMES[
-            int(predicted_class)
-        ]
-        # Converts the predicted class number into its class name.
-
-
-        # -------------------------------------------------
-        # GET PROBABILITIES
-        # -------------------------------------------------
-
-        class_probabilities = {
-            CLASS_NAMES[i]: float(probabilities[i])
-            for i in range(len(CLASS_NAMES))
+        raw_scores = {
+            "normal": prob_normal_joint,
+            "pneumonia": prob_pneumonia_joint,
+            "tuberculosis": prob_tb_joint
         }
-        # Creates a readable probability dictionary for all classes.
 
+        # Normalize to sum to 100%
+        total_score = sum(raw_scores.values()) + 1e-12
+        normalized_probabilities = {
+            "normal": float(raw_scores["normal"] / total_score),
+            "pneumonia": float(raw_scores["pneumonia"] / total_score),
+            "tuberculosis": float(raw_scores["tuberculosis"] / total_score)
+        }
 
-        # -------------------------------------------------
-        # GET TRIAGE RESULT
-        # -------------------------------------------------
+        # Argmax selection
+        predicted_label = max(normalized_probabilities, key=normalized_probabilities.get)
+        confidence = float(normalized_probabilities[predicted_label])
 
-        triage_result = get_triage_recommendation(
-            confidence,
-            uncertainty
-        )
-        # Generates the prototype triage recommendation.
+        # Normalized predictive entropy as uncertainty
+        prob_array = np.array(list(normalized_probabilities.values()))
+        epsilon = 1e-12
+        entropy = -np.sum(prob_array * np.log(prob_array + epsilon))
+        uncertainty = float(entropy / np.log(3.0))
 
+        # Triage guidance
+        triage = get_triage_recommendation(predicted_label, confidence, uncertainty)
 
-        # -------------------------------------------------
-        # RETURN RESULT
-        # -------------------------------------------------
+        # Clean console summary
+        print("\n" + "=" * 50)
+        print(f"Prediction  : {predicted_label.upper()}")
+        print(f"Confidence  : {confidence * 100:.2f}%")
+        print(f"Uncertainty : {uncertainty * 100:.2f}%")
+        print(f"Breakdown   : Normal: {normalized_probabilities['normal']*100:.2f}%, Pneumonia: {normalized_probabilities['pneumonia']*100:.2f}%, TB: {normalized_probabilities['tuberculosis']*100:.2f}%")
+        print(f"Triage Level: {triage['level']}")
+        print("=" * 50 + "\n")
 
         return jsonify({
-
             "prediction": predicted_label,
-            # Predicted disease/class.
-
-            "confidence": round(confidence, 4),
-            # Confidence of the predicted class.
-
-            "uncertainty": round(uncertainty, 4),
-            # Estimated prediction uncertainty.
-
-            "probabilities": class_probabilities,
-            # Probability for Normal, Pneumonia and Tuberculosis.
-
-            "triage": triage_result
-            # Prototype triage recommendation.
-
+            "confidence": confidence,
+            "uncertainty": uncertainty,
+            "probabilities": normalized_probabilities,
+            "triage": triage["level"],
+            "recommendation": triage["recommendation"]
         })
 
-
     except Exception as e:
-        # Handles unexpected errors.
+        return jsonify({"error": str(e)}), 500
 
-        return jsonify({
-            "error": str(e)
-        }), 500
-        # Returns the error to the frontend.
-
-
-# ---------------------------------------------------------
-# RUN FLASK SERVER
-# ---------------------------------------------------------
+# ============================================================
+# 6. START SERVER
+# ============================================================
 
 if __name__ == "__main__":
-    app.run(
-        host="0.0.0.0",
-        port=5000,
-        debug=True
-    )
-    # Starts the Flask development server on port 5000.
+    print("------------------------------------------")
+    print("Chest X-Ray Screening System")
+    print("Classes: Normal, Pneumonia, Tuberculosis")
+    print("Deep Vision Classifier Ready.")
+    print("Open this address in your browser:")
+    print("http://127.0.0.1:5000")
+    print("------------------------------------------")
+    app.run(host="0.0.0.0", port=5000, debug=True)
